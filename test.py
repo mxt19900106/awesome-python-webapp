@@ -6,6 +6,7 @@
 __author__ = 'hlsky'
 
 
+
 # 导入MySQL驱动:
 import mysql.connector
 # 注意把password设为你的root口令:
@@ -28,3 +29,5 @@ print  values
 cursor.close()
 
 conn.close()
+
+print "test git in pycharm"
