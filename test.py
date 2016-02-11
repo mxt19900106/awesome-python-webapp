@@ -9,6 +9,7 @@ __author__ = 'hlsky'
 
 # 导入MySQL驱动:
 import mysql.connector
+'''
 # 注意把password设为你的root口令:
 conn = mysql.connector.connect(user='root', password='password', database='test', use_unicode=True)
 cursor = conn.cursor()
@@ -32,3 +33,11 @@ conn.close()
 
 print "test git in pycharm"
 print "test dev branch"
+'''
+
+class _LazyConn(object):
+    def __init__(self):
+        mysql.connector.connect(user='root', password='password', database='test', use_unicode=True)
+        return None
+
+print _LazyConn()
