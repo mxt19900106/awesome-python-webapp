@@ -255,3 +255,5 @@ except:
 from www.transwarp import db
 db.create_engine('root', 'password', 'test')
 print db.select("select * from user")
+
+print "test whether dev can push"
