@@ -16,6 +16,9 @@ import logging
 import threading
 import sys
 import traceback
+import codecs
+import chardet
+import os
 
 #test Dict
 class Dict(dict):
@@ -252,8 +255,29 @@ except:
 '''
 
 #test transwarp.db
+'''
 from www.transwarp import db
 db.create_engine('root', 'password', 'test')
 print db.select("select * from user")
 
 print "test whether dev can push"
+'''
+
+#a method to open file encoding
+import codecs
+import chardet
+def open_chs_file(filename, mode):
+    bytes = min(32, os.path.getsize(filename))
+    raw = open(filename, 'rb').read(bytes)
+
+    if raw.startswith(codecs.BOM_UTF8):
+        encoding = 'utf-8-sig'
+    else:
+        result = chardet.detect(raw)
+        encoding = result['encoding']
+
+    infile = open(filename, mode, encoding=encoding)
+    data = infile.read()
+    infile.close()
+
+    print(data)
