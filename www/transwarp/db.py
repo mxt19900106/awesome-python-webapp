@@ -321,6 +321,57 @@ def select_int(sql, *args):
 def select(sql, *args):
     return _select(sql, False, *args)
 
+#TODO:调整__init__和init
+#TODO:实现with用法
+#TODO:注意buffered导致第二个select能够成功，把连接托管给select, 尝试进程内自己管理
+class selector(object):
+    def __init__(self, n):
+        self.batch = n
+        self.cursor = None
+        self.data = None
+        self.names = []
+
+    def init(self,sql,*args):
+        global _db_ctx
+        self.should_cleanup = False
+        if not _db_ctx.is_init():
+            _db_ctx.init()
+            self.should_cleanup = True
+        sql = sql.replace('?', '%s')
+        logging.info("Sql: %s, Args: %s" % (sql, args))
+        try:
+            self.cursor = _db_ctx.cursor()
+            self.cursor.execute(sql, args)
+            if self.cursor.description:
+                self.names = [x[0] for x in self.cursor.description]
+            #self.data = [Dict(self.names,x) for x in self.cursor.fetchmany(self.batch)]
+        except:
+            del self
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        self.data = [Dict(self.names,x) for x in self.cursor.fetchmany(self.batch)]
+        if len(self.data) == 0:
+            raise StopIteration
+        return self.data
+
+    def __getitem__(self, item):
+        if item >= len(self.data):
+            raise IndexError("index out of range")
+        return self.data[item]
+
+    def __del__(self):
+        global _db_ctx
+        if self.should_cleanup:
+            if self.cursor:
+                cur = self.cursor
+                self.cursor = None
+                cur.close()
+            _db_ctx.cleanup()
+
+
 
 @with_connection
 def _update(sql, *args):
@@ -446,6 +497,17 @@ def with_transaction(func):
 if __name__ == "__main__":
     create_engine('root', 'password', 'test')
 
+    sel = selector(2)
+    sel.init("select * from user")
+    sel2 = selector(1)
+    sel2.init("select * from user")
+    for i in sel:
+        print i
+    del sel
+    for i in sel2:
+        print i
+    del sel2
+
     # print update('insert into user (id, name) values (?, ?)', '4', 'John')
     # print select("select * from user")
 
@@ -456,5 +518,5 @@ if __name__ == "__main__":
     #u1 = dict(id=1, name='Bob', email='bob@test.org', passwd='bobobob', last_modified=time.time())
     #insert('user', **u1)
     #print select("select * from user")
-    import doctest
-    doctest.testmod(verbose=True)
+    #import doctest
+    #doctest.testmod(verbose=True)
